@@ -1,0 +1,26 @@
+OrderID,OrderDate,Category,SubCategory,Country,Quantity,DiscountRate,SalesAmount,ProfitAmount,CustomerRating
+ORD-501,2024-01-10,Technology,Laptops,United States,2,0.10,2400.00,480.00,4.8
+ORD-502,2024-01-14,Furniture,Chairs,Germany,4,0.15,850.00,120.00,4.2
+ORD-503,2024-01-18,Office Supplies,Binders,United Kingdom,10,0.05,220.00,65.00,3.9
+ORD-504,2024-01-22,Technology,Smartphones,Japan,3,0.00,2100.00,520.00,4.9
+ORD-505,2024-01-26,Furniture,Tables,Canada,1,0.20,620.00,-40.00,3.5
+ORD-506,2024-01-30,Office Supplies,Paper,France,15,0.00,180.00,55.00,4.6
+ORD-507,2024-02-04,Technology,Accessories,Australia,8,0.10,400.00,110.00,4.4
+ORD-508,2024-02-08,Furniture,Bookcases,United States,2,0.25,540.00,35.00,4.1
+ORD-509,2024-02-12,Office Supplies,Appliances,Germany,3,0.05,750.00,190.00,4.7
+ORD-510,2024-02-16,Technology,Laptops,India,4,0.10,4600.00,920.00,4.8
+ORD-511,2024-02-20,Furniture,Chairs,United Kingdom,6,0.15,1260.00,180.00,4.0
+ORD-512,2024-02-24,Office Supplies,Storage,Japan,5,0.10,340.00,70.00,4.3
+ORD-513,2024-02-28,Technology,Smartphones,United States,5,0.05,3800.00,910.00,4.7
+ORD-514,2024-03-03,Furniture,Tables,France,2,0.20,1100.00,80.00,3.8
+ORD-515,2024-03-07,Office Supplies,Binders,Canada,8,0.00,195.00,58.00,4.5
+ORD-516,2024-03-11,Technology,Accessories,Germany,12,0.15,660.00,165.00,4.6
+ORD-517,2024-03-15,Furniture,Chairs,Australia,3,0.10,690.00,95.00,4.2
+ORD-518,2024-03-19,Office Supplies,Paper,United States,20,0.00,240.00,75.00,4.9
+ORD-519,2024-03-23,Technology,Laptops,United Kingdom,3,0.05,3750.00,820.00,4.8
+ORD-520,2024-03-27,Furniture,Bookcases,Japan,2,0.15,590.00,45.00,4.1
+ORD-521,2024-04-01,Office Supplies,Appliances,Canada,4,0.10,980.00,240.00,4.4
+ORD-522,2024-04-05,Technology,Smartphones,Australia,4,0.00,3100.00,740.00,4.6
+ORD-523,2024-04-09,Furniture,Tables,Germany,1,0.25,580.00,-25.00,3.4
+ORD-524,2024-04-13,Office Supplies,Storage,France,6,0.10,410.00,90.00,4.3
+ORD-525,2024-04-17,Technology,Accessories,United States,10,0.10,520.00,140.00,4.7
