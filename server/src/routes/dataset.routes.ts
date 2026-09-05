@@ -6,11 +6,16 @@ import {
   getDatasetPreview,
   queryChartData,
   deleteDataset,
+  previewCleanDataset,
+  cleanDataset,
 } from '../controllers/dataset.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { uploadCSV } from '../middlewares/upload.middleware';
 import { validateRequest } from '../middlewares/validate.middleware';
-import { queryChartDataSchema } from '../validation/dataset.validation';
+import {
+  queryChartDataSchema,
+  cleanDatasetSchema,
+} from '../validation/dataset.validation';
 import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
@@ -33,6 +38,22 @@ router.get(
   authenticate,
   validateRequest({ query: queryChartDataSchema }),
   asyncHandler(queryChartData)
+);
+
+// Preview data cleaning operations without persisting
+router.post(
+  '/:id/clean/preview',
+  authenticate,
+  validateRequest({ body: cleanDatasetSchema }),
+  asyncHandler(previewCleanDataset)
+);
+
+// Apply data cleaning operations (save as new or overwrite)
+router.post(
+  '/:id/clean',
+  authenticate,
+  validateRequest({ body: cleanDatasetSchema }),
+  asyncHandler(cleanDataset)
 );
 
 // Delete dataset

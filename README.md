@@ -21,6 +21,16 @@
   - Categorical frequency distributions and top value breakdowns.
   - Pairwise Pearson correlation matrix for numeric features.
   - Paginated preview data table with multi-column sorting and instant search.
+- **🧹 Interactive Data Cleaning Studio**:
+  - Automated data quality anomaly detection & alerts.
+  - **1-Click Smart Auto-Clean**: automatic deduplication, string trimming, and median/mode null imputation.
+  - **Missing Value Imputation**: Mean, Median, Mode, Constant value, or Row Drop.
+  - **Deduplication**: Remove exact duplicate records or key-based duplicates.
+  - **Outlier Detection & Filtering**: Statistical IQR (1.5x) and Z-Score (3.0x) methods with Drop or Cap actions.
+  - **Text Transformation**: Trim whitespace, lowercase/uppercase conversions, and symbol cleanup.
+  - **Column Management**: Drop or rename columns with automatic schema and statistics recalculation.
+  - **Real-Time Live Preview**: Instant audit log & table preview before committing changes.
+  - **Non-Destructive Versioning**: Save as a new cleaned dataset or overwrite in place.
 - **📈 Rich Visualizations (Recharts)**:
   - Bar Charts (standard and categorical counts)
   - Line Charts (trends and continuous series)
@@ -220,6 +230,8 @@ docker-compose up --build
 | `GET` | `/api/datasets/:id` | Yes | Get dataset metadata & column schema |
 | `GET` | `/api/datasets/:id/preview` | Yes | Paginated row preview with search & sort |
 | `GET` | `/api/datasets/:id/query` | Yes | Aggregated data query for visualizations |
+| `POST` | `/api/datasets/:id/clean/preview` | Yes | Live preview data cleaning without saving |
+| `POST` | `/api/datasets/:id/clean` | Yes | Execute cleaning pipeline (save new or overwrite) |
 | `DELETE` | `/api/datasets/:id` | Yes | Delete dataset |
 | `GET` | `/api/analytics/:id/profiling` | Yes | Data completeness, quality, and correlations |
 | `GET` | `/api/analytics/:id/distribution/:col` | Yes | Histogram or category frequency distribution |
@@ -241,11 +253,11 @@ cd server
 npm test
 ```
 
-Vitest will execute:
-- Numeric statistical calculation accuracy tests (min, max, mean, median, standard deviation, sum)
-- Aggregation query tests (sum, avg, count, scatter)
-- Auth route validation & token security tests
-- Role-based access control tests
+Vitest will execute 34 tests across 4 suites:
+- **Data Cleaning Suite** (`tests/cleaning.test.ts`): Deduplication, Mean/Median/Mode imputation, Outlier filtering (IQR & Z-score), text formatting, and pipeline execution.
+- **Analytics & Math Suite** (`tests/analytics.test.ts`): Numeric statistics calculation accuracy (min, max, mean, median, standard deviation, sum) and aggregation queries.
+- **Authentication Suite** (`tests/auth.test.ts`): Registration, login, password hashing, JWT session verification, and 1-click demo access.
+- **API Guard Suite** (`tests/api.test.ts`): Health check, protected routes, and 401/404 handling.
 
 ---
 

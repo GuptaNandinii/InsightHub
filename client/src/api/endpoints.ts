@@ -1,5 +1,5 @@
 import api from './client';
-import { User, Dataset, Dashboard, DatasetSummary } from '../types';
+import { User, Dataset, Dashboard, DatasetSummary, CleanDatasetPayload, CleanPreviewResponse } from '../types';
 
 export const authApi = {
   login: async (credentials: { email: string; password: string }) => {
@@ -67,6 +67,14 @@ export const datasetApi = {
   },
   delete: async (id: string) => {
     const res = await api.delete(`/datasets/${id}`);
+    return res.data;
+  },
+  previewClean: async (id: string, payload: CleanDatasetPayload) => {
+    const res = await api.post(`/datasets/${id}/clean/preview`, payload);
+    return res.data.data as CleanPreviewResponse;
+  },
+  clean: async (id: string, payload: CleanDatasetPayload) => {
+    const res = await api.post(`/datasets/${id}/clean`, payload);
     return res.data;
   },
 };

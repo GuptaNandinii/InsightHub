@@ -6,6 +6,7 @@ import {
   Columns,
   LineChart,
   BarChart2,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
@@ -13,6 +14,7 @@ import { Card } from '../components/common/Card';
 import { Skeleton } from '../components/common/Skeleton';
 import { DatasetTable } from '../components/datasets/DatasetTable';
 import { ChartRenderer } from '../components/charts/ChartRenderer';
+import { DataCleaningStudio } from '../components/datasets/DataCleaningStudio';
 import { Dataset, ChartType, AggregationType } from '../types';
 import { datasetApi } from '../api/endpoints';
 import { formatFileSize, formatNumber } from '../utils/colors';
@@ -23,7 +25,7 @@ export const DatasetDetailPage: React.FC = () => {
 
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'preview' | 'schema' | 'quickchart'>('preview');
+  const [activeTab, setActiveTab] = useState<'preview' | 'schema' | 'cleaning' | 'quickchart'>('preview');
 
   // Quick chart state
   const [quickX, setQuickX] = useState<string>('');
@@ -200,6 +202,18 @@ export const DatasetDetailPage: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('cleaning')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
+            activeTab === 'cleaning'
+              ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          <Sparkles className="h-4 w-4 text-amber-500" />
+          Data Cleaning Studio
+        </button>
+
+        <button
           onClick={() => setActiveTab('quickchart')}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
             activeTab === 'quickchart'
@@ -214,6 +228,16 @@ export const DatasetDetailPage: React.FC = () => {
 
       {/* Tab Content 1: Preview Table */}
       {activeTab === 'preview' && <DatasetTable datasetId={dataset._id} />}
+
+      {/* Tab Content: Data Cleaning Studio */}
+      {activeTab === 'cleaning' && (
+        <DataCleaningStudio
+          dataset={dataset}
+          onCleaningComplete={() => {
+            datasetApi.getById(dataset._id).then(setDataset);
+          }}
+        />
+      )}
 
       {/* Tab Content 2: Schema & Column Statistics */}
       {activeTab === 'schema' && (

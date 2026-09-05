@@ -11,3 +11,30 @@ export const queryChartDataSchema = z.object({
   filterField: z.string().optional(),
   filterValue: z.string().optional(),
 });
+
+export const cleanOperationSchema = z.object({
+  type: z.enum([
+    'removeDuplicates',
+    'dropNulls',
+    'imputeMissing',
+    'formatText',
+    'filterOutliers',
+    'dropColumn',
+    'renameColumn',
+  ]),
+  column: z.string().optional(),
+  columns: z.array(z.string()).optional(),
+  strategy: z.enum(['mean', 'median', 'mode', 'constant']).optional(),
+  constantValue: z.any().optional(),
+  action: z.enum(['trim', 'lowercase', 'uppercase', 'removeSpecial', 'drop', 'cap']).optional(),
+  method: z.enum(['iqr', 'zscore']).optional(),
+  factor: z.number().optional(),
+  oldName: z.string().optional(),
+  newName: z.string().optional(),
+});
+
+export const cleanDatasetSchema = z.object({
+  operations: z.array(cleanOperationSchema).min(1, 'At least one cleaning operation is required'),
+  saveAsNew: z.boolean().optional().default(true),
+  newDatasetName: z.string().optional(),
+});

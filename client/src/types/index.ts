@@ -95,3 +95,41 @@ export interface DatasetSummary {
     coefficient: number;
   }>;
 }
+
+export type CleanActionType =
+  | 'removeDuplicates'
+  | 'dropNulls'
+  | 'imputeMissing'
+  | 'formatText'
+  | 'filterOutliers'
+  | 'dropColumn'
+  | 'renameColumn';
+
+export interface CleanOperation {
+  type: CleanActionType;
+  column?: string;
+  columns?: string[];
+  subsetColumns?: string[];
+  strategy?: 'mean' | 'median' | 'mode' | 'constant';
+  constantValue?: any;
+  action?: 'trim' | 'lowercase' | 'uppercase' | 'removeSpecial' | 'drop' | 'cap';
+  method?: 'iqr' | 'zscore';
+  factor?: number;
+  oldName?: string;
+  newName?: string;
+}
+
+export interface CleanDatasetPayload {
+  operations: CleanOperation[];
+  saveAsNew?: boolean;
+  newDatasetName?: string;
+}
+
+export interface CleanPreviewResponse {
+  rowsBefore: number;
+  rowsAfter: number;
+  changesReport: string[];
+  columns: ColumnMeta[];
+  previewRows: Record<string, any>[];
+}
+

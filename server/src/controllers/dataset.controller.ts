@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Dataset } from '../models/Dataset';
 import { parseCSVBuffer } from '../services/csvParser';
 import { aggregateData } from '../services/aggregationService';
+import { executeCleaningPipeline } from '../services/dataCleaningService';
 import { ApiError } from '../utils/apiError';
 
 export const uploadDataset = async (req: Request, res: Response): Promise<void> => {
@@ -182,3 +183,90 @@ export const deleteDataset = async (req: Request, res: Response): Promise<void> 
     message: 'Dataset deleted successfully',
   });
 };
+
+export const previewCleanDataset = async (req: Request, res: Response): Promise<void> => {
+  const dataset = await Dataset.findOne({
+    _id: req.params.id,
+    userId: req.user!._id,
+  });
+
+  if (!dataset) {
+    throw ApiError.notFound('Dataset not found');
+  }
+
+  const { operations } = req.body;
+  const result = executeCleaningPipeline(dataset.rows, dataset.columns, operations || []);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      rowsBefore: result.rowsBefore,
+      rowsAfter: result.rowsAfter,
+      changesReport: result.changesReport,
+      columns: result.cleanedColumns,
+      previewRows: result.cleanedRows.slice(0, 15),
+    },
+  });
+};
+
+export const cleanDataset = async (req: Request, res: Response): Promise<void> => {
+  const dataset = await Dataset.findOne({
+    _id: req.params.id,
+    userId: req.user!._id,
+  });
+
+  if (!dataset) {
+    throw ApiError.notFound('Dataset not found');
+  }
+
+  const { operations, saveAsNew = true, newDatasetName } = req.body;
+  const result = executeCleaningPipeline(dataset.rows, dataset.columns, operations || []);
+
+  if (saveAsNew) {
+    const finalName = newDatasetName?.trim() || `${dataset.name} (Cleaned)`;
+    const newDataset = await Dataset.create({
+      userId: req.user!._id,
+      name: finalName,
+      originalFilename: `cleaned_${dataset.originalFilename}`,
+      fileSize: dataset.fileSize,
+      rowCount: result.rowsAfter,
+      columnCount: result.cleanedColumns.length,
+      columns: result.cleanedColumns,
+      rows: result.cleanedRows,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `Cleaned dataset created as "${finalName}"`,
+      data: {
+        id: newDataset._id,
+        name: newDataset.name,
+        rowCount: newDataset.rowCount,
+        columnCount: newDataset.columnCount,
+        columns: newDataset.columns,
+        changesReport: result.changesReport,
+      },
+    });
+  } else {
+    // In-place overwrite
+    dataset.rows = result.cleanedRows;
+    dataset.columns = result.cleanedColumns;
+    dataset.rowCount = result.rowsAfter;
+    dataset.columnCount = result.cleanedColumns.length;
+    await dataset.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Dataset successfully cleaned and updated in place',
+      data: {
+        id: dataset._id,
+        name: dataset.name,
+        rowCount: dataset.rowCount,
+        columnCount: dataset.columnCount,
+        columns: dataset.columns,
+        changesReport: result.changesReport,
+      },
+    });
+  }
+};
+
