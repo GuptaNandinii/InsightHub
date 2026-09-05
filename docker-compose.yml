@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: insighthub-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - insighthub-net
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: insighthub-server
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb:27017/insighthub
+      - JWT_SECRET=insighthub_docker_production_secret_key_2026
+      - JWT_EXPIRES_IN=7d
+      - CLIENT_URL=http://localhost:3000
+    depends_on:
+      - mongodb
+    networks:
+      - insighthub-net
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: insighthub-client
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+    networks:
+      - insighthub-net
+
+networks:
+  insighthub-net:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
