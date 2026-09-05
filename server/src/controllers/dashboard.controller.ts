@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Dashboard } from '../models/Dashboard';
 import { Dataset } from '../models/Dataset';
 import { aggregateData } from '../services/aggregationService';
+import { getDatasetRows } from '../services/datasetStorageService';
 import { ApiError } from '../utils/apiError';
 
 export const createDashboard = async (req: Request, res: Response): Promise<void> => {
@@ -116,7 +117,9 @@ export const getPublicDashboard = async (req: Request, res: Response): Promise<v
       };
     }
 
-    const chartData = aggregateData(dataset.rows, {
+    const rows = await getDatasetRows(dataset._id);
+
+    const chartData = aggregateData(rows, {
       xAxis: w.xAxis,
       yAxis: w.yAxis,
       aggregation: w.aggregation,

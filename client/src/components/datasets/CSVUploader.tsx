@@ -22,8 +22,8 @@ export const CSVUploader: React.FC<CSVUploaderProps> = ({ onUploadSuccess }) => 
       setErrorMessage('Please select a valid CSV (.csv) file.');
       return;
     }
-    if (selectedFile.size > 25 * 1024 * 1024) {
-      setErrorMessage('File size exceeds the 25MB limit.');
+    if (selectedFile.size > 50 * 1024 * 1024) {
+      setErrorMessage('File size exceeds the 50MB limit.');
       return;
     }
     setFile(selectedFile);
@@ -104,7 +104,7 @@ export const CSVUploader: React.FC<CSVUploaderProps> = ({ onUploadSuccess }) => 
             Click to upload or drag & drop CSV
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            CSV files up to 25MB. Headers are auto-detected.
+            CSV files up to 50MB. Headers are auto-detected.
           </p>
         </div>
       ) : (

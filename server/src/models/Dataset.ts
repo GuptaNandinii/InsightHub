@@ -29,6 +29,7 @@ export interface IDataset extends Document {
   rowCount: number;
   columnCount: number;
   columns: IColumnMeta[];
+  previewRows?: Record<string, any>[];
   rows: Record<string, any>[];
   createdAt: Date;
   updatedAt: Date;
@@ -90,6 +91,10 @@ const datasetSchema = new Schema<IDataset>(
       default: 0,
     },
     columns: [columnMetaSchema],
+    previewRows: {
+      type: [Schema.Types.Mixed],
+      default: [],
+    } as any,
     rows: {
       type: [Schema.Types.Mixed],
       default: [],

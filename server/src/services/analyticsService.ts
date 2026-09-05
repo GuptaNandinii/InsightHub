@@ -55,7 +55,10 @@ const calculatePearsonCorrelation = (x: number[], y: number[]): number => {
   return Math.round((numerator / denominator) * 100) / 100;
 };
 
-export const generateDatasetAnalytics = (dataset: IDataset): DatasetSummary => {
+export const generateDatasetAnalytics = (
+  dataset: IDataset,
+  rows?: Record<string, any>[]
+): DatasetSummary => {
   const totalCells = dataset.rowCount * dataset.columnCount;
   let totalMissing = 0;
   let numericCount = 0;
@@ -94,6 +97,7 @@ export const generateDatasetAnalytics = (dataset: IDataset): DatasetSummary => {
     .map((c) => c.name);
 
   const correlations: Array<{ col1: string; col2: string; coefficient: number }> = [];
+  const datasetRows = rows && rows.length > 0 ? rows : dataset.rows || (dataset as any).previewRows || [];
 
   for (let i = 0; i < numericColumns.length; i++) {
     for (let j = i + 1; j < numericColumns.length; j++) {
@@ -101,7 +105,7 @@ export const generateDatasetAnalytics = (dataset: IDataset): DatasetSummary => {
       const col2 = numericColumns[j];
 
       // Pair valid rows where both columns are non-null
-      const pairs = dataset.rows
+      const pairs = datasetRows
         .filter((r) => r[col1] !== null && r[col2] !== null && !isNaN(Number(r[col1])) && !isNaN(Number(r[col2])))
         .map((r) => ({ x: Number(r[col1]), y: Number(r[col2]) }));
 

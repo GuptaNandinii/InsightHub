@@ -7,7 +7,7 @@ const storage = multer.memoryStorage();
 export const uploadCSV = multer({
   storage,
   limits: {
-    fileSize: 25 * 1024 * 1024, // 25 MB max limit
+    fileSize: 50 * 1024 * 1024, // 50 MB max limit
   },
   fileFilter: (_req, file, cb) => {
     const isCsvMime = [

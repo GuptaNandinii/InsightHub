@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Dataset } from '../models/Dataset';
 import { generateDatasetAnalytics } from '../services/analyticsService';
+import { getDatasetRows } from '../services/datasetStorageService';
 import { ApiError } from '../utils/apiError';
 
 export const getDatasetProfiling = async (req: Request, res: Response): Promise<void> => {
@@ -13,7 +14,8 @@ export const getDatasetProfiling = async (req: Request, res: Response): Promise<
     throw ApiError.notFound('Dataset not found');
   }
 
-  const analytics = generateDatasetAnalytics(dataset);
+  const rows = await getDatasetRows(dataset._id);
+  const analytics = generateDatasetAnalytics(dataset, rows);
 
   res.status(200).json({
     success: true,
@@ -38,7 +40,8 @@ export const getColumnDistribution = async (req: Request, res: Response): Promis
     throw ApiError.notFound(`Column "${columnName}" does not exist in this dataset.`);
   }
 
-  const rawValues = dataset.rows
+  const rows = await getDatasetRows(dataset._id);
+  const rawValues = rows
     .map((r) => r[columnName])
     .filter((v) => v !== null && v !== undefined && v !== '');
 

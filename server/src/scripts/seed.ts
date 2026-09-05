@@ -4,8 +4,10 @@ import mongoose from 'express';
 import { connectDB, disconnectDB } from '../config/db';
 import { User } from '../models/User';
 import { Dataset } from '../models/Dataset';
+import { DatasetChunk } from '../models/DatasetChunk';
 import { Dashboard } from '../models/Dashboard';
 import { parseCSVBuffer } from '../services/csvParser';
+import { saveDatasetRows } from '../services/datasetStorageService';
 
 const seedDatabase = async () => {
   console.log('[Seed] Connecting to MongoDB...');
@@ -29,8 +31,9 @@ const seedDatabase = async () => {
 
     // Clean up existing demo datasets & dashboards to ensure fresh seed
     await Dataset.deleteMany({ userId: demoUser._id });
+    await DatasetChunk.deleteMany({});
     await Dashboard.deleteMany({ userId: demoUser._id });
-    console.log('[Seed] Cleared previous demo datasets and dashboards');
+    console.log('[Seed] Cleared previous demo datasets, chunks, and dashboards');
 
     // 2. Load Sample CSVs
     const sampleDir = path.resolve(__dirname, '../../../sample_data');
@@ -61,6 +64,7 @@ const seedDatabase = async () => {
       const buffer = fs.readFileSync(filePath);
       const parsed = await parseCSVBuffer(buffer);
 
+      const previewSample = parsed.rows.slice(0, 100);
       const dataset = await Dataset.create({
         userId: demoUser._id,
         name: item.name,
@@ -69,8 +73,11 @@ const seedDatabase = async () => {
         rowCount: parsed.rowCount,
         columnCount: parsed.columnCount,
         columns: parsed.columns,
-        rows: parsed.rows,
+        previewRows: previewSample,
+        rows: previewSample,
       });
+
+      await saveDatasetRows(dataset._id, parsed.rows);
 
       createdDatasets[item.file] = dataset;
       console.log(`[Seed] Imported dataset: "${item.name}" with ${parsed.rowCount} rows.`);

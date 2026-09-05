@@ -3,6 +3,11 @@ import { Dataset } from '../models/Dataset';
 import { parseCSVBuffer } from '../services/csvParser';
 import { aggregateData } from '../services/aggregationService';
 import { executeCleaningPipeline } from '../services/dataCleaningService';
+import {
+  saveDatasetRows,
+  getDatasetRows,
+  deleteDatasetRows,
+} from '../services/datasetStorageService';
 import { ApiError } from '../utils/apiError';
 
 export const uploadDataset = async (req: Request, res: Response): Promise<void> => {
@@ -17,6 +22,8 @@ export const uploadDataset = async (req: Request, res: Response): Promise<void> 
     throw ApiError.badRequest('The uploaded CSV file contains no data rows.');
   }
 
+  const previewSample = parsed.rows.slice(0, 100);
+
   const dataset = await Dataset.create({
     userId: req.user!._id,
     name: displayName,
@@ -25,8 +32,12 @@ export const uploadDataset = async (req: Request, res: Response): Promise<void> 
     rowCount: parsed.rowCount,
     columnCount: parsed.columnCount,
     columns: parsed.columns,
-    rows: parsed.rows,
+    previewRows: previewSample,
+    rows: previewSample,
   });
+
+  // Save all rows partitioned in chunks to avoid MongoDB 16MB document limit
+  await saveDatasetRows(dataset._id, parsed.rows);
 
   res.status(201).json({
     success: true,
@@ -46,7 +57,7 @@ export const uploadDataset = async (req: Request, res: Response): Promise<void> 
 
 export const getAllDatasets = async (req: Request, res: Response): Promise<void> => {
   const datasets = await Dataset.find({ userId: req.user!._id })
-    .select('-rows')
+    .select('-rows -previewRows')
     .sort({ createdAt: -1 });
 
   res.status(200).json({
@@ -59,7 +70,7 @@ export const getDatasetById = async (req: Request, res: Response): Promise<void>
   const dataset = await Dataset.findOne({
     _id: req.params.id,
     userId: req.user!._id,
-  }).select('-rows');
+  }).select('-rows -previewRows');
 
   if (!dataset) {
     throw ApiError.notFound('Dataset not found');
@@ -87,7 +98,23 @@ export const getDatasetPreview = async (req: Request, res: Response): Promise<vo
   const sortBy = req.query.sortBy as string;
   const sortOrder = (req.query.sortOrder as string) === 'desc' ? -1 : 1;
 
-  let processedRows = dataset.rows;
+  // Ultra-fast path: first page without search or sort uses cached previewRows if available
+  if (!search && !sortBy && page === 1 && dataset.previewRows && dataset.previewRows.length >= limit) {
+    res.status(200).json({
+      success: true,
+      data: {
+        totalRows: dataset.rowCount,
+        page,
+        limit,
+        totalPages: Math.ceil(dataset.rowCount / limit),
+        columns: dataset.columns.map((c) => ({ name: c.name, dataType: c.dataType })),
+        rows: dataset.previewRows.slice(0, limit),
+      },
+    });
+    return;
+  }
+
+  let processedRows = await getDatasetRows(dataset._id);
 
   // Filter search
   if (search) {
@@ -150,7 +177,9 @@ export const queryChartData = async (req: Request, res: Response): Promise<void>
     filterValue,
   } = req.query;
 
-  const chartData = aggregateData(dataset.rows, {
+  const rows = await getDatasetRows(dataset._id);
+
+  const chartData = aggregateData(rows, {
     xAxis: String(xAxis),
     yAxis: yAxis ? String(yAxis) : undefined,
     aggregation: aggregation as any,
@@ -178,6 +207,9 @@ export const deleteDataset = async (req: Request, res: Response): Promise<void> 
     throw ApiError.notFound('Dataset not found');
   }
 
+  // Cascading delete of chunk documents
+  await deleteDatasetRows(req.params.id);
+
   res.status(200).json({
     success: true,
     message: 'Dataset deleted successfully',
@@ -195,7 +227,8 @@ export const previewCleanDataset = async (req: Request, res: Response): Promise<
   }
 
   const { operations } = req.body;
-  const result = executeCleaningPipeline(dataset.rows, dataset.columns, operations || []);
+  const rows = await getDatasetRows(dataset._id);
+  const result = executeCleaningPipeline(rows, dataset.columns, operations || []);
 
   res.status(200).json({
     success: true,
@@ -220,10 +253,13 @@ export const cleanDataset = async (req: Request, res: Response): Promise<void> =
   }
 
   const { operations, saveAsNew = true, newDatasetName } = req.body;
-  const result = executeCleaningPipeline(dataset.rows, dataset.columns, operations || []);
+  const rows = await getDatasetRows(dataset._id);
+  const result = executeCleaningPipeline(rows, dataset.columns, operations || []);
 
   if (saveAsNew) {
     const finalName = newDatasetName?.trim() || `${dataset.name} (Cleaned)`;
+    const previewSample = result.cleanedRows.slice(0, 100);
+
     const newDataset = await Dataset.create({
       userId: req.user!._id,
       name: finalName,
@@ -232,8 +268,11 @@ export const cleanDataset = async (req: Request, res: Response): Promise<void> =
       rowCount: result.rowsAfter,
       columnCount: result.cleanedColumns.length,
       columns: result.cleanedColumns,
-      rows: result.cleanedRows,
+      previewRows: previewSample,
+      rows: previewSample,
     });
+
+    await saveDatasetRows(newDataset._id, result.cleanedRows);
 
     res.status(201).json({
       success: true,
@@ -249,11 +288,15 @@ export const cleanDataset = async (req: Request, res: Response): Promise<void> =
     });
   } else {
     // In-place overwrite
-    dataset.rows = result.cleanedRows;
+    const previewSample = result.cleanedRows.slice(0, 100);
+    dataset.rows = previewSample;
+    dataset.previewRows = previewSample;
     dataset.columns = result.cleanedColumns;
     dataset.rowCount = result.rowsAfter;
     dataset.columnCount = result.cleanedColumns.length;
     await dataset.save();
+
+    await saveDatasetRows(dataset._id, result.cleanedRows);
 
     res.status(200).json({
       success: true,
